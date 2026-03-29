@@ -51,27 +51,12 @@ INSERT INTO students (name, department, year, phone) VALUES
 ('Rahul', 'CSE', 2, '9876543210'),
 ('Anjali', 'ECE', 3, '9876501234');
 
-SELECT * FROM students;
-SELECT * FROM equipment;
 
 INSERT INTO issue_records (student_id, equipment_id, issue_date, return_date, status)
 VALUES
 (1, 1, '2026-02-26', NULL, 'Issued'),
 (2, 2, '2026-02-26', NULL, 'Issued');
 
-SELECT * FROM issue_records;
-
-UPDATE equipment
-SET available_quantity = available_quantity - 1
-WHERE equipment_id = 1;
-
-UPDATE equipment
-SET available_quantity = available_quantity - 1
-WHERE equipment_id = 2;
-
-SELECT equipment_name, total_quantity, available_quantity FROM equipment;
-
-USE lab_asset_db;
 
 INSERT INTO students (name, department, year, phone) VALUES
 ('Arjun Nair','CSE',1,'9123456781'),
@@ -90,18 +75,16 @@ INSERT INTO students (name, department, year, phone) VALUES
 ('Priya Menon','ECE',1,'9123456794'),
 ('Farhan Ali','CSE',2,'9123456795');
 
-SELECT COUNT(*) AS total_students FROM students;
-SELECT * FROM admin;
-SHOW COLUMNS FROM admin;
+
 
 INSERT INTO admin (username, password) VALUES
 ('lab_assistant', 'lab123'),
 ('inventory_manager', 'inv123'),
 ('hod_cse', 'hod123'),
 ('system_admin', 'sys123');
-SELECT COUNT(*) AS total_admins FROM admin;
 
-DESCRIBE labs;
+
+
 INSERT INTO labs (lab_name, location) VALUES
 ('Data Structures Lab', 'Block A'),
 ('Network Lab', 'Block A'),
@@ -115,7 +98,7 @@ INSERT INTO labs (lab_name, location) VALUES
 ('Structural Lab - CE', 'Block F'),
 ('Embedded Systems Lab', 'Block B'),
 ('Robotics Lab', 'Block G');
-SELECT COUNT(*) AS total_labs FROM labs;
+
 
 INSERT INTO students (name, department, year, phone) VALUES
 ('Ethan Clark','CSE',1,'9000000101'),
@@ -152,7 +135,7 @@ INSERT INTO students (name, department, year, phone) VALUES
 ('Chloe Evans','IT',1,'9000000132'),
 ('Gabriel Edwards','ECE',2,'9000000133'); 
 
-SELECT COUNT(*) AS total_students FROM students;
+
 
 INSERT INTO equipment (equipment_name, category, total_quantity, available_quantity, lab_id) VALUES
 ('Server Machine','Computer',5,5,1),
@@ -202,10 +185,7 @@ INSERT INTO equipment (equipment_name, category, total_quantity, available_quant
 ('Battery Testing Unit','Electrical',7,7,8),
 ('Signal Generator','Electronics',14,14,2),
 ('Digital Multimeter','Electronics',25,25,2);
-SELECT COUNT(*) AS total_equipment FROM equipment;
 
-DELETE FROM issue_records
-WHERE issue_id IN (1,2);
 
 INSERT INTO issue_records (student_id, equipment_id, issue_date, return_date, status) VALUES
 (1, 3, '2026-01-02', '2026-01-06', 'Returned'),
@@ -259,30 +239,7 @@ INSERT INTO issue_records (student_id, equipment_id, issue_date, return_date, st
 (49, 49, '2026-02-19', '2026-02-24', 'Returned'),
 (50, 50, '2026-02-20', NULL, 'Issued');
 
-SELECT COUNT(*) AS total_issues FROM issue_records;
-SELECT status, COUNT(*) AS count
-FROM issue_records
-GROUP BY status;
 
-SELECT s.name, e.equipment_name, i.issue_date, i.return_date, i.status
-FROM issue_records i
-JOIN students s ON i.student_id = s.student_id
-JOIN equipment e ON i.equipment_id = e.equipment_id;
-
-SELECT l.lab_name, e.equipment_name, COUNT(i.issue_id) AS times_borrowed
-FROM issue_records i
-JOIN equipment e ON i.equipment_id = e.equipment_id
-JOIN labs l ON e.lab_id = l.lab_id
-GROUP BY e.equipment_id; 
-
-SELECT e.equipment_name, COUNT(*) AS total_issues
-FROM issue_records i
-JOIN equipment e ON i.equipment_id = e.equipment_id
-GROUP BY e.equipment_id;
-
-SELECT department, COUNT(*) AS total_students
-FROM students
-GROUP BY department;
 
 CREATE VIEW current_issued AS
 SELECT s.name, e.equipment_name, i.issue_date
@@ -344,95 +301,51 @@ ADD CONSTRAINT chk_available_quantity
 CHECK (available_quantity >= 0);
 
 use lab_asset_db;
-SHOW TABLES;
 
-SET SQL_SAFE_UPDATES = 0;
-
-SET @count = 0;
-
-UPDATE issue_records
-SET issue_id = (@count := @count + 1)
-ORDER BY issue_date, student_id;
-
-SET SQL_SAFE_UPDATES = 1;
-
-ALTER TABLE issue_records AUTO_INCREMENT = 51;
-use lab_asset_db;
 UPDATE admin
 SET password = 'addmin1234'
 WHERE username = 'admin';
 
-DESCRIBE equipment;
-DESCRIBE issues;
-describe issue_records;
-
 ALTER TABLE issue_records
 ADD COLUMN fine INT DEFAULT 0;
-
-DESC issue_records;
-
-SELECT equipment_id, equipment_name, total_quantity, available_quantity
-FROM equipment
-WHERE equipment_name = 'helio';
-
-SELECT COUNT(*) 
-FROM issue_records 
-WHERE equipment_id = (SELECT equipment_id FROM equipment WHERE equipment_name='helio')
-AND status = 'Issued';
-
-UPDATE equipment e
-SET available_quantity = 
-    total_quantity - (
-        SELECT COUNT(*) 
-        FROM issue_records ir
-        WHERE ir.equipment_id = e.equipment_id
-        AND ir.status = 'Issued'
-    );
     
-    UPDATE equipment e
-SET available_quantity = 
-    total_quantity - (
-        SELECT COUNT(*) 
-        FROM issue_records ir
-        WHERE ir.equipment_id = e.equipment_id
-        AND ir.status = 'Issued'
-    )
-WHERE equipment_name = 'helio';
-
-SET SQL_SAFE_UPDATES = 0;
-UPDATE equipment e
-SET available_quantity = 
-    total_quantity - (
-        SELECT COUNT(*) 
-        FROM issue_records ir
-        WHERE ir.equipment_id = e.equipment_id
-        AND ir.status = 'Issued'
-    );
-    SET SQL_SAFE_UPDATES = 1;
-    
-    SELECT equipment_name, total_quantity, available_quantity
-FROM equipment
-WHERE equipment_name='helio';
-
-DESCRIBE issue_records;
-
 ALTER TABLE equipment 
 ADD COLUMN status VARCHAR(20) DEFAULT 'Available';
 
-describe equipment;
 
-ALTER TABLE equipment ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE;
+-- Step 1: Drop existing foreign keys
+ALTER TABLE issue_records
+DROP FOREIGN KEY issue_records_ibfk_1;
 
-SELECT * FROM issue_records 
-WHERE equipment_id = (SELECT equipment_id FROM equipment WHERE equipment_name='Desktop Computer')
-AND status='Issued';
+ALTER TABLE issue_records
+DROP FOREIGN KEY issue_records_ibfk_2;
 
+-- Step 2: Add them again with CASCADE
+ALTER TABLE issue_records
+ADD CONSTRAINT fk_student
+FOREIGN KEY (student_id)
+REFERENCES students(student_id)
+ON DELETE CASCADE;
 
-ALTER TABLE students ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE;
-USE lab_asset_db;
+ALTER TABLE issue_records
+ADD CONSTRAINT fk_equipment
+FOREIGN KEY (equipment_id)
+REFERENCES equipment(equipment_id)
+ON DELETE CASCADE;
 
-show triggers;
+SHOW CREATE TABLE issue_records;
 
-alter table students add constraint chk_department check (department in('CSE','ECE','IT','ME','CE','EEE'));
-ALTER TABLE students
-MODIFY department ENUM('CSE','ECE','IT','ME','CE','EEE');
+CREATE TABLE complaints (complaint_id INT AUTO_INCREMENT PRIMARY KEY, student_name VARCHAR(100), equipment_id INT, complaint_type VARCHAR(50), message TEXT, status ENUM('Pending','Resolved') DEFAULT 'Pending', submitted_at DATETIME DEFAULT NOW());
+CREATE TABLE student_users (id INT AUTO_INCREMENT PRIMARY KEY, student_id INT UNIQUE, username VARCHAR(50) UNIQUE, password VARCHAR(100));
+
+ALTER TABLE complaints ADD COLUMN student_id INT, ADD FOREIGN KEY (student_id) REFERENCES students(student_id);
+
+SET SQL_SAFE_UPDATES = 0;
+DELETE FROM student_users;
+SET SQL_SAFE_UPDATES = 1;
+
+INSERT INTO student_users (student_id, username, password)
+SELECT student_id,
+       LOWER(REPLACE(name, ' ', '')),
+       CONCAT(LOWER(REPLACE(name, ' ', '')), '456')
+FROM students;
