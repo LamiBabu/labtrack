@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students - LabTrack</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="header-section">
+            <button onclick="window.history.back()">⬅ Back</button>
+            <h1>👥 Students Management</h1>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Stats Bar -->
+        <div class="page-stats-bar">
+            <div class="page-stat">
+                <span class="page-stat-icon">👥</span>
+                <div>
+                    <div class="page-stat-value">{{ students | selectattr('is_deleted', 'equalto', false) | list | length }}</div>
+                    <div class="page-stat-label">Active Students</div>
+                </div>
+            </div>
+            <div class="page-stat">
+                <span class="page-stat-icon">🗑️</span>
+                <div>
+                    <div class="page-stat-value">{{ students | selectattr('is_deleted', 'equalto', true) | list | length }}</div>
+                    <div class="page-stat-label">Deleted</div>
+                </div>
+            </div>
+            <div class="page-stat">
+                <span class="page-stat-icon">📋</span>
+                <div>
+                    <div class="page-stat-value">{{ students | length }}</div>
+                    <div class="page-stat-label">Total Records</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add New Student Form -->
+        <div class="card">
+            <h2 class="card-title">➕ Add New Student</h2>
+            <form method="POST" class="form-grid">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" pattern="[A-Z][a-z]+( [A-Z][a-z]+)*"
+                           placeholder="e.g. Rahul Kumar" required>
+                </div>
+                <div class="form-group">
+                    <label for="department">Department</label>
+                    <select id="department" name="department" required>
+                        <option value="">Select Department</option>
+                        <option value="CSE">CSE</option>
+                        <option value="CE">CE</option>
+                        <option value="IT">IT</option>
+                        <option value="ECE">ECE</option>
+                        <option value="EEE">EEE</option>
+                        <option value="ME">ME</option>
+                        <option value="RA">RA</option>
+                        <option value="EL">EL</option>
+                        <option value="SF">SF</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="year">Year</label>
+                    <select id="year" name="year" required>
+                        <option value="">Select Year</option>
+                        <option value="1">Year 1</option>
+                        <option value="2">Year 2</option>
+                        <option value="3">Year 3</option>
+                        <option value="4">Year 4</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="text" id="phone" name="phone" pattern="[0-9]{10}"
+                           placeholder="10-digit number" required>
+                </div>
+                <button type="submit" class="btn-primary">➕ Add Student</button>
+            </form>
+        </div>
+
+        <!-- Search -->
+        <div class="card search-card">
+            <form method="GET" class="search-form">
+                <input type="search" name="search" value="{{ request.args.get('search', '') }}"
+                       placeholder="🔍 Search by Name, Department or ID..." class="search-input">
+                <button type="submit" class="btn-secondary">Search</button>
+            </form>
+        </div>
+
+        <!-- Students Table -->
+        <div class="card table-card">
+            <table class="students-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Year</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr class="{% if student.is_deleted %}deleted-row{% endif %}">
+                        <td class="serial-no">{{ loop.index }}</td>
+                        <td class="id-cell">#{{ student.student_id }}</td>
+                        <td class="name-cell"><strong>{{ student.name }}</strong></td>
+                        <td>
+                            <span class="dept-badge dept-{{ student.department | lower }}">
+                                {{ student.department }}
+                            </span>
+                        </td>
+                        <td class="center">
+                            <span class="year-badge">Year {{ student.year }}</span>
+                        </td>
+                        <td>📞 {{ student.phone }}</td>
+                        <td class="center">
+                            {% if student.is_deleted %}
+                                <span class="status-deleted">🗑️ Deleted</span>
+                            {% else %}
+                                <span class="status-returned">✅ Active</span>
+                            {% endif %}
+                        </td>
+                        <td class="actions-cell">
+                            {% if not student.is_deleted %}
+                                <a href="/edit_student/{{ student.student_id }}" class="action-link edit-link">✏️ Edit</a>
+                                <form action="{{ url_for('delete_student', id=student.student_id) }}" method="post"
+                                      onsubmit="return confirm('Delete {{ student.name }}?')" style="display:inline">
+                                    <button type="submit" class="action-link delete-link">🗑️ Delete</button>
+                                </form>
+                            {% else %}
+                                <a href="{{ url_for('undo_student', id=student.student_id) }}" class="action-link undo-link">↩️ Restore</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if not students %}
+            <div class="empty-state">
+                <p>🎓 No students found. Add one to get started!</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <style>
+        /* Page Stats Bar */
+        .page-stats-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .page-stat {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: linear-gradient(135deg, #1a1a1a, #0f0f0f);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 12px;
+            padding: 16px 24px;
+            flex: 1;
+            min-width: 160px;
+            transition: all 0.3s ease;
+        }
+        .page-stat:hover {
+            border-color: rgba(239,68,68,0.5);
+            transform: translateY(-2px);
+        }
+        .page-stat-icon { font-size: 2rem; }
+        .page-stat-value { font-size: 1.6rem; font-weight: 700; color: #ff4757; line-height: 1; }
+        .page-stat-label { font-size: 0.78rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+        /* Department Badge */
+        .dept-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: rgba(239,68,68,0.15);
+            color: #ff6b6b;
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+
+        /* Year Badge */
+        .year-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: rgba(251,191,36,0.12);
+            color: #fde68a;
+            border: 1px solid rgba(251,191,36,0.3);
+        }
+    </style>
+    <script>window.scrollTo(0,0);</script>
+</body>
+</html>

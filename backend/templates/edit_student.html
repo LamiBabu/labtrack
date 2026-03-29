@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Student - LabTrack</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <button onclick="window.history.back()">⬅ Back</button>
+            <h1>✏️ Edit Student</h1>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">Update Student Information</h2>
+            <form method="POST" class="form-grid" style="grid-template-columns: 1fr;">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" value="{{ student.name }}" pattern="[A-Z][a-z]+( [A-Z][a-z]+)*" placeholder="Enter student name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="department">Department</label>
+                    <select id="department" name="department" required>
+                        <option value="">Select Department</option>
+                        <option value="CSE" {% if student.department == 'CSE' %}selected{% endif %}>CSE</option>
+                        <option value="CE" {% if student.department == 'CE' %}selected{% endif %}>CE</option>
+                        <option value="IT" {% if student.department == 'IT' %}selected{% endif %}>IT</option>
+                        <option value="ECE" {% if student.department == 'ECE' %}selected{% endif %}>ECE</option>
+                        <option value="EEE" {% if student.department == 'EEE' %}selected{% endif %}>EEE</option>
+                        <option value="ME" {% if student.department == 'ME' %}selected{% endif %}>ME</option>
+                        <option value="RA" {% if student.department == 'RA' %}selected{% endif %}>RA</option>
+                        <option value="EL" {% if student.department == 'EL' %}selected{% endif %}>EL</option>
+                        <option value="SF" {% if student.department == 'SF' %}selected{% endif %}>SF</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="year">Year</label>
+                    <select id="year" name="year" required>
+                        <option value="">Select Year</option>
+                        <option value="1" {% if student.year == 1 %}selected{% endif %}>Year 1</option>
+                        <option value="2" {% if student.year == 2 %}selected{% endif %}>Year 2</option>
+                        <option value="3" {% if student.year == 3 %}selected{% endif %}>Year 3</option>
+                        <option value="4" {% if student.year == 4 %}selected{% endif %}>Year 4</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="text" id="phone" name="phone" value="{{ student.phone }}" pattern="[0-9]{10}" placeholder="Enter 10-digit phone number" required>
+                </div>
+
+                <button type="submit" class="btn-primary">Update Student</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raise Complaint - LabTrack</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+
+        <div class="header-section">
+            <button onclick="window.history.back()">⬅ Back</button>
+            <h1>🎫 Raise a Complaint</h1>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card" style="max-width:600px;margin:0 auto;">
+            <h2 class="card-title">📝 Submit Your Complaint</h2>
+            <p style="color:#94a3b8;font-size:0.9rem;margin:-10px 0 24px 0;">
+                Logged in as <strong style="color:#ff4757;">{{ session.get('student_name', 'Student') }}</strong>
+            </p>
+
+            <form method="POST" class="form-grid" style="grid-template-columns:1fr;">
+                <div class="form-group">
+                    <label>Complaint Type <span style="color:#ef4444;">*</span></label>
+                    <select name="complaint_type" required>
+                        <option value="">Select complaint type...</option>
+                        <option value="Damaged Equipment">⚠️ Damaged Equipment</option>
+                        <option value="Not Working">🔧 Not Working</option>
+                        <option value="Missing Item">❓ Missing Item</option>
+                        <option value="Other">📝 Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Equipment <span style="color:#64748b;font-weight:400;">(Optional)</span></label>
+                    <select name="equipment_id">
+                        <option value="">Select equipment if applicable...</option>
+                        {% for e in equipment_list %}
+                        <option value="{{ e.equipment_id }}">{{ e.equipment_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Message <span style="color:#ef4444;">*</span></label>
+                    <textarea name="message" rows="5"
+                        placeholder="Describe your complaint in detail..."
+                        required
+                        style="padding:12px 14px;border-radius:8px;border:2px solid rgba(239,68,68,0.2);
+                               background:linear-gradient(135deg,#1a1a1a,#0f0f0f);color:#f1f5f9;
+                               font-family:'Poppins',sans-serif;font-size:0.95rem;resize:vertical;
+                               width:100%;box-sizing:border-box;transition:border-color 0.3s ease;
+                               outline:none;"
+                        onfocus="this.style.borderColor='#ef4444'"
+                        onblur="this.style.borderColor='rgba(239,68,68,0.2)'"></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary">🎫 Submit Complaint</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

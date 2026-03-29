@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issues - LabTrack</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+
+        <div class="header-section">
+            <button onclick="window.history.back()">⬅ Back</button>
+            <h1>📋 Issue Records</h1>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Stats Bar -->
+        <div class="page-stats-bar">
+            <div class="page-stat">
+                <span class="page-stat-icon">📤</span>
+                <div>
+                    <div class="page-stat-value">{{ issue_list | selectattr('status', 'equalto', 'Issued') | list | length }}</div>
+                    <div class="page-stat-label">Currently Issued</div>
+                </div>
+            </div>
+            <div class="page-stat">
+                <span class="page-stat-icon">✅</span>
+                <div>
+                    <div class="page-stat-value">{{ issue_list | selectattr('status', 'equalto', 'Returned') | list | length }}</div>
+                    <div class="page-stat-label">Returned</div>
+                </div>
+            </div>
+            <div class="page-stat">
+                <span class="page-stat-icon">⏰</span>
+                <div>
+                    <div class="page-stat-value">{{ issue_list | selectattr('late_days', 'gt', 0) | list | length }}</div>
+                    <div class="page-stat-label">Overdue</div>
+                </div>
+            </div>
+            <div class="page-stat">
+                <span class="page-stat-icon">💰</span>
+                <div>
+                    <div class="page-stat-value">₹ {{ issue_list | sum(attribute='fine') }}</div>
+                    <div class="page-stat-label">Total Fine</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add New Issue -->
+        <div class="card">
+            <h2 class="card-title">➕ Issue Equipment to Student</h2>
+            <form method="POST" action="{{ url_for('add_issue') }}" class="form-grid">
+                <div class="form-group">
+                    <label for="student_id">Select Student</label>
+                    <select id="student_id" name="student_id" required>
+                        <option value="">Choose a student...</option>
+                        {% for student in students %}
+                            <option value="{{ student.student_id }}">
+                                {{ student.name }} (ID: {{ student.student_id }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="equipment_id">Select Equipment</label>
+                    <select id="equipment_id" name="equipment_id" required>
+                        <option value="">Choose equipment...</option>
+                        {% for equip in equipment_list %}
+                            <option value="{{ equip.equipment_id }}">{{ equip.equipment_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary">📤 Issue Equipment</button>
+            </form>
+        </div>
+
+        <!-- Issue Records Table -->
+        <div class="card table-card">
+            <table class="students-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student</th>
+                        <th>Equipment</th>
+                        <th>Issue Date</th>
+                        <th>Return Date</th>
+                        <th>Status</th>
+                        <th>Late Days</th>
+                        <th>Fine</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in issue_list %}
+                    <tr class="{% if issue.status == 'Issued' %}issued-row{% endif %}">
+                        <td class="serial-no">{{ loop.index }}</td>
+                        <td class="name-cell"><strong>{{ issue.student_name }}</strong></td>
+                        <td>
+                            <span style="color:#e5e7eb;font-weight:500;">{{ issue.equipment_name }}</span>
+                        </td>
+                        <td class="center">
+                            <span class="date-badge">{{ issue.issue_date }}</span>
+                        </td>
+                        <td class="center">
+                            {% if issue.return_date %}
+                                <span class="date-badge date-returned">{{ issue.return_date }}</span>
+                            {% else %}
+                                <span class="not-returned">— Pending —</span>
+                            {% endif %}
+                        </td>
+                        <td class="center">
+                            {% if issue.status == 'Issued' %}
+                                <span class="status-badge-pill badge-issued">📤 Issued</span>
+                            {% else %}
+                                <span class="status-badge-pill badge-ok">✅ Returned</span>
+                            {% endif %}
+                        </td>
+                        <td class="center">
+                            {% if issue.late_days > 0 %}
+                                <span class="late-badge">🕐 {{ issue.late_days }}d</span>
+                            {% else %}
+                                <span class="on-time">✓ On Time</span>
+                            {% endif %}
+                        </td>
+                        <td class="center">
+                            {% if issue.fine > 0 %}
+                                <span class="fine-badge">₹ {{ issue.fine }}</span>
+                            {% else %}
+                                <span class="no-fine">₹ 0</span>
+                            {% endif %}
+                        </td>
+                        <td class="actions-cell">
+                            {% if issue.status == 'Issued' %}
+                                <a href="{{ url_for('return_equipment', id=issue.issue_id) }}" class="action-link edit-link">✅ Return</a>
+                            {% else %}
+                                <a href="{{ url_for('undo_return', id=issue.issue_id) }}" class="action-link undo-link">↩️ Undo</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if not issue_list %}
+            <div class="empty-state"><p>📤 No issue records yet. Start issuing equipment!</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <style>
+        .date-badge {
+            background: rgba(100,116,139,0.15);
+            color: #cbd5e1;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .date-returned {
+            background: rgba(34,197,94,0.1);
+            color: #86efac;
+        }
+        .status-badge-pill {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .badge-ok     { background: rgba(34,197,94,0.12);  color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+        .badge-issued { background: rgba(251,191,36,0.12); color: #fde68a; border: 1px solid rgba(251,191,36,0.3); }
+    </style>
+    <script>window.scrollTo(0,0);</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Equipment - LabTrack</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <button onclick="window.history.back()">⬅ Back</button>
+            <h1>✏️ Edit Equipment</h1>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">Update Equipment Information</h2>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form method="POST" class="form-grid" style="grid-template-columns: 1fr;">
+                <div class="form-group">
+                    <label for="equipment_name">Equipment Name</label>
+                    <input type="text" id="equipment_name" name="equipment_name" value="{{ equip.equipment_name }}" pattern="[A-Z][a-zA-Z]*( [A-Z][a-zA-Z]*)*" placeholder="e.g. Microscope, PCR Machine" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <input type="text" id="category" name="category" value="{{ equip.category }}" pattern="[A-Z][a-zA-Z]*( [A-Z][a-zA-Z]*)*" placeholder="e.g. Optical, Lab Instrument" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="total_quantity">Total Quantity</label>
+                    <input type="number" id="total_quantity" name="total_quantity" min="1" value="{{ equip.total_quantity }}" placeholder="Enter quantity" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="lab_id">Lab ID</label>
+                    <input type="number" id="lab_id" name="lab_id" value="{{ equip.lab_id }}" placeholder="Enter lab ID" required>
+                </div>
+
+                <button type="submit" class="btn-primary">Update Equipment</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

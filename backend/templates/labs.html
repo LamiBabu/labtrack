@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labs - LabTrack</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <button onclick="window.history.back()">⬅ Back</button>
+            <h1>🏢 Labs Overview</h1>
+        </div>
+
+        {% if lab_list %}
+        <div class="lab-summary">
+            <div class="lab-summary-item">
+                <span class="lab-summary-icon">🏢</span>
+                <span class="lab-summary-value">{{ lab_list|length }}</span>
+                <span class="lab-summary-label">Total Labs</span>
+            </div>
+            <div class="lab-summary-item">
+                <span class="lab-summary-icon">⚙️</span>
+                <span class="lab-summary-value">{{ lab_list | sum(attribute='total_equipment') }}</span>
+                <span class="lab-summary-label">Total Equipment</span>
+            </div>
+            <div class="lab-summary-item">
+                <span class="lab-summary-icon">✅</span>
+                <span class="lab-summary-value">{{ lab_list | sum(attribute='total_available') }}</span>
+                <span class="lab-summary-label">Available</span>
+            </div>
+            <div class="lab-summary-item">
+                <span class="lab-summary-icon">⚠️</span>
+                <span class="lab-summary-value">{{ lab_list | sum(attribute='total_damaged') }}</span>
+                <span class="lab-summary-label">Damaged</span>
+            </div>
+        </div>
+
+        <div class="lab-cards-grid">
+            {% for lab in lab_list %}
+            <div class="lab-card">
+
+                <div class="lab-card-top">
+                    <div>
+                        <h3 class="lab-name">{{ lab.lab_name }}</h3>
+                        <p class="lab-location">📍 {{ lab.location }}</p>
+                    </div>
+                    <span class="lab-id-badge">ID: {{ lab.lab_id }}</span>
+                </div>
+
+                <div class="lab-card-body">
+                    <div class="lab-info-row">
+                        <span class="lab-info-label">⚙️ Total Equipment</span>
+                        <span class="lab-info-value">{{ lab.total_equipment }}</span>
+                    </div>
+                    <div class="lab-info-row">
+                        <span class="lab-info-label">⚠️ Damaged</span>
+                        <span class="lab-info-value" style="color:#fca5a5;">{{ lab.total_damaged }}</span>
+                    </div>
+                </div>
+
+                <div class="lab-card-footer">
+                    {% if lab.total_equipment == 0 %}
+                        <span class="lab-status-badge lab-empty">📭 No Equipment</span>
+                    {% elif lab.total_damaged > 0 and lab.total_available == 0 %}
+                        <span class="lab-status-badge lab-full">📤 All Issued / Damaged</span>
+                    {% elif lab.total_available == 0 %}
+                        <span class="lab-status-badge lab-full">📤 All Issued</span>
+                    {% elif lab.total_damaged > 0 %}
+                        <span class="lab-status-badge lab-damaged">⚠️ Has Damaged</span>
+                    {% else %}
+                        <span class="lab-status-badge lab-ok">✅ All Good</span>
+                    {% endif %}
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No labs found. 🔭</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

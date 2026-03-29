@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaints - LabTrack</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+
+        <div class="header-section">
+            <button onclick="window.history.back()">⬅ Back</button>
+            <h1>🎫 Complaints</h1>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Stats Bar -->
+        <div class="page-stats-bar">
+            <div class="page-stat">
+                <span class="page-stat-icon">🎫</span>
+                <div>
+                    <div class="page-stat-value">{{ complaint_list | length }}</div>
+                    <div class="page-stat-label">Total Complaints</div>
+                </div>
+            </div>
+            <div class="page-stat">
+                <span class="page-stat-icon">⏳</span>
+                <div>
+                    <div class="page-stat-value">{{ complaint_list | selectattr('status', 'equalto', 'Pending') | list | length }}</div>
+                    <div class="page-stat-label">Pending</div>
+                </div>
+            </div>
+            <div class="page-stat">
+                <span class="page-stat-icon">✅</span>
+                <div>
+                    <div class="page-stat-value">{{ complaint_list | selectattr('status', 'equalto', 'Resolved') | list | length }}</div>
+                    <div class="page-stat-label">Resolved</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complaints Table -->
+        <div class="card table-card">
+            <table class="students-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student</th>
+                        <th>Type</th>
+                        <th>Equipment</th>
+                        <th>Message</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in complaint_list %}
+                    <tr class="{% if c.status == 'Pending' %}pending-row{% endif %}">
+                        <td class="serial-no">{{ loop.index }}</td>
+                        <td class="name-cell"><strong>{{ c.student_name }}</strong></td>
+                        <td>
+                            {% if c.complaint_type == 'Damaged Equipment' %}
+                                <span class="complaint-type-badge type-damaged">⚠️ Damaged</span>
+                            {% elif c.complaint_type == 'Not Working' %}
+                                <span class="complaint-type-badge type-notworking">🔧 Not Working</span>
+                            {% elif c.complaint_type == 'Missing Item' %}
+                                <span class="complaint-type-badge type-missing">❓ Missing</span>
+                            {% else %}
+                                <span class="complaint-type-badge type-other">📝 Other</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if c.equipment_name %}
+                                <span style="color:#e5e7eb;font-weight:500;">{{ c.equipment_name }}</span>
+                            {% else %}
+                                <span style="color:#64748b;">—</span>
+                            {% endif %}
+                        </td>
+                        <td style="max-width:220px;">
+                            <span class="complaint-message">{{ c.message }}</span>
+                        </td>
+                        <td class="center">
+                            {% if c.status == 'Pending' %}
+                                <span class="status-badge-pill badge-issued">⏳ Pending</span>
+                            {% else %}
+                                <span class="status-badge-pill badge-ok">✅ Resolved</span>
+                            {% endif %}
+                        </td>
+                        <td class="center">
+                            <span class="date-badge">{{ c.submitted_at.strftime('%d %b %Y') if c.submitted_at else '—' }}</span>
+                        </td>
+                        <td class="actions-cell">
+                            {% if c.status == 'Pending' %}
+                                <a href="{{ url_for('resolve_complaint', id=c.complaint_id) }}" class="action-link edit-link">✅ Resolve</a>
+                            {% else %}
+                                <a href="{{ url_for('pending_complaint', id=c.complaint_id) }}" class="action-link undo-link">↩️ Reopen</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if not complaint_list %}
+            <div class="empty-state"><p>🎉 No complaints yet. All good!</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <style>
+        .pending-row {
+            background: rgba(251,191,36,0.05) !important;
+            border-left: 3px solid rgba(251,191,36,0.4) !important;
+        }
+
+        .complaint-type-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .type-damaged    { background: rgba(239,68,68,0.12);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .type-notworking { background: rgba(251,146,60,0.12); color: #fdba74; border: 1px solid rgba(251,146,60,0.3); }
+        .type-missing    { background: rgba(168,85,247,0.12); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.3); }
+        .type-other      { background: rgba(100,116,139,0.12);color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
+
+        .complaint-message {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-clamp: 2;
+            overflow: hidden;
+            color: #cbd5e1;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .status-badge-pill {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .badge-ok     { background: rgba(34,197,94,0.12);  color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+        .badge-issued { background: rgba(251,191,36,0.12); color: #fde68a; border: 1px solid rgba(251,191,36,0.3); }
+
+        .date-badge {
+            background: rgba(100,116,139,0.15);
+            color: #cbd5e1;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+    </style>
+</body>
+</html>

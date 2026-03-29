@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - LabTrack</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="navbar">
+        <div>
+            <h2 class="project-title">🔬 LabTrack</h2>
+            <p class="project-desc">Smart Lab Asset Management System</p>
+        </div>
+        <div class="nav-links">
+            <a href="/">📊 Dashboard</a>
+            <a href="/students">👥 Students</a>
+            <a href="/equipment">⚙️ Equipment</a>
+            <a href="/issues">📋 Issues</a>
+            <a href="/labs">🏢 Labs</a>
+            <a href="/complaints">🎫 Complaints</a>
+            {% if session.get('admin_username') %}
+            <span class="logged-in">👤 {{ session.get('admin_username', 'Admin') }}</span>
+            {% endif %}
+            <a href="/logout" class="logout-btn">🚪 Logout</a>
+        </div>
+    </div>
+
+    <div class="dashboard-wrapper">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="dashboard-header">
+            <h1>📈 Dashboard Overview</h1>
+            <p>Real-time Lab Asset Management Statistics</p>
+        </div>
+
+        {% if (low_stock or 0) > 0 or (out_of_stock or 0) > 0 %}
+        <div class="alerts-section">
+            {% if out_of_stock > 0 %}
+            <div class="alert alert-danger">🚨 <strong>{{ out_of_stock or 0 }}</strong> equipment item(s) are completely out of stock!</div>
+            {% endif %}
+            {% if low_stock > 0 %}
+            <div class="alert alert-warning">⚠️ <strong>{{ low_stock or 0 }}</strong> equipment item(s) have low stock (≤ 2 available).</div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Stats -->
+        <div class="stats-container">
+            <div class="stats">
+                <div class="stats-icon">🎓</div>
+                <p class="stats-label">Total Students</p>
+                <h2 class="stats-value">{{ total_students or 0 }}</h2>
+                <p class="stats-sublabel">Registered</p>
+            </div>
+            <div class="stats">
+                <div class="stats-icon">🛠️</div>
+                <p class="stats-label">Total Equipment</p>
+                <h2 class="stats-value">{{ total_equipment or 0 }}</h2>
+                <p class="stats-sublabel">Active Assets</p>
+            </div>
+            <div class="stats">
+                <div class="stats-icon">💰</div>
+                <p class="stats-label">Total Fine</p>
+                <h2 class="stats-value">₹ {{ total_fine or 0 }}</h2>
+                <p class="stats-sublabel">Collected</p>
+            </div>
+            <div class="stats">
+                <div class="stats-icon">📤</div>
+                <p class="stats-label">Currently Issued</p>
+                <h2 class="stats-value">{{ current_issued or 0 }}</h2>
+                <p class="stats-sublabel">In Use</p>
+            </div>
+            <div class="stats">
+                <div class="stats-icon">✅</div>
+                <p class="stats-label">Total Returned</p>
+                <h2 class="stats-value">{{ total_returned or 0 }}</h2>
+                <p class="stats-sublabel">Completed</p>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <h3>📊 Equipment by Category</h3>
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>📅 Issue Trend (Last 6 Months)</h3>
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="quick-links-section">
+            <h3>⚡ Quick Actions</h3>
+            <div class="quick-links">
+                <a href="/students" class="quick-link-btn students-btn">
+                    <span class="icon">👥</span><span class="text">View Students</span>
+                </a>
+                <a href="/equipment" class="quick-link-btn equipment-btn">
+                    <span class="icon">⚙️</span><span class="text">View Equipment</span>
+                </a>
+                <a href="/issues" class="quick-link-btn issues-btn">
+                    <span class="icon">📋</span><span class="text">View Issues</span>
+                </a>
+                <a href="/labs" class="quick-link-btn labs-btn">
+                    <span class="icon">🏢</span><span class="text">View Labs</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>LabTrack © 2026 | Smart Lab Asset Management System</p>
+    </footer>
+
+    <script>
+        document.querySelectorAll('.navbar a').forEach(a => {
+            if (a.href === window.location.href) a.classList.add('active');
+        });
+
+        const chartData = JSON.parse('{{ chart_data | tojson | safe }}' || '[]');
+        const issueTrend = JSON.parse('{{ issue_trend | tojson | safe }}' || '[]');
+
+        const categoryCanvas = document.getElementById('categoryChart');
+        if (categoryCanvas && chartData.length > 0) {
+            new Chart(categoryCanvas, {
+                type: 'bar',
+                data: {
+                    labels: chartData.map(d => d.category),
+                    datasets: [
+                        { label: 'Total', data: chartData.map(d => d.total), backgroundColor: 'rgba(8,145,178,0.7)' },
+                        { label: 'Available', data: chartData.map(d => d.available), backgroundColor: 'rgba(34,197,94,0.7)' },
+                        { label: 'Damaged', data: chartData.map(d => d.damaged), backgroundColor: 'rgba(239,68,68,0.7)' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#2d3561' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#2d3561' } }
+                    }
+                }
+            });
+        }
+
+        const trendCanvas = document.getElementById('trendChart');
+        if (trendCanvas && issueTrend.length > 0) {
+            new Chart(trendCanvas, {
+                type: 'line',
+                data: {
+                    labels: issueTrend.map(d => d.month).reverse(),
+                    datasets: [{
+                        label: 'Issues',
+                        data: issueTrend.map(d => d.count).reverse(),
+                        borderColor: '#22d3ee',
+                        backgroundColor: 'rgba(34,211,238,0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#22d3ee'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: '#e5e7eb' } } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: '#2d3561' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: '#2d3561' }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

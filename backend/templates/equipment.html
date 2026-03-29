@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipment - LabTrack</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+
+        <div class="header-section">
+            <button onclick="window.history.back()">⬅ Back</button>
+            <h1>⚙️ Equipment Management</h1>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Stats Bar -->
+        <div class="page-stats-bar">
+            <div class="page-stat">
+                <span class="page-stat-icon">⚙️</span>
+                <div>
+                    <div class="page-stat-value">{{ equipment | selectattr('is_deleted', 'equalto', false) | list | length }}</div>
+                    <div class="page-stat-label">Total Equipment</div>
+                </div>
+            </div>
+            <div class="page-stat">
+                <span class="page-stat-icon">✅</span>
+                <div>
+                    <div class="page-stat-value">{{ equipment | selectattr('is_deleted', 'equalto', false) | selectattr('available_quantity', 'gt', 0) | list | length }}</div>
+                    <div class="page-stat-label">Available</div>
+                </div>
+            </div>
+            <div class="page-stat">
+                <span class="page-stat-icon">⚠️</span>
+                <div>
+                    <div class="page-stat-value">{{ equipment | sum(attribute='damaged_quantity') }}</div>
+                    <div class="page-stat-label">Total Damaged</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add New Equipment -->
+        <div class="card">
+            <h2 class="card-title">➕ Add New Equipment</h2>
+            <form method="POST" class="form-grid">
+                <div class="form-group">
+                    <label for="equipment_name">Equipment Name</label>
+                    <input type="text" id="equipment_name" name="equipment_name"
+                           pattern="[A-Z][a-zA-Z]*( [A-Z][a-zA-Z]*)*"
+                           placeholder="e.g. Microscope, PCR Machine" required>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <input type="text" id="category" name="category"
+                           pattern="[A-Z][a-zA-Z]*( [A-Z][a-zA-Z]*)*"
+                           placeholder="e.g. Optical, Lab Instrument" required>
+                </div>
+                <div class="form-group">
+                    <label for="total_quantity">Total Quantity</label>
+                    <input type="number" id="total_quantity" name="total_quantity" min="1" placeholder="Enter quantity" required>
+                </div>
+                <div class="form-group">
+                    <label for="lab_id">Lab ID</label>
+                    <input type="number" id="lab_id" name="lab_id" placeholder="Enter lab ID" required>
+                </div>
+                <button type="submit" class="btn-primary">➕ Add Equipment</button>
+            </form>
+        </div>
+
+        <!-- Search -->
+        <div class="card search-card">
+            <form method="GET" class="search-form">
+                <input type="search" name="search" value="{{ search_query }}"
+                       placeholder="🔍 Search by Name, Category or ID..." class="search-input">
+                <button type="submit" class="btn-secondary">Search</button>
+            </form>
+        </div>
+
+        <!-- Equipment Table -->
+        <div class="card table-card">
+            <table class="students-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Total</th>
+                        <th>Available</th>
+                        <th>Damaged</th>
+                        <th>Lab</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for equip in equipment %}
+                    <tr class="{% if equip.is_deleted %}deleted-row{% elif equip.available_quantity == 0 and not equip.is_deleted %}out-of-stock-row{% elif equip.available_quantity <= 2 and not equip.is_deleted %}low-stock-row{% endif %}">
+                        <td class="serial-no">{{ loop.index }}</td>
+                        <td class="id-cell">#{{ equip.equipment_id }}</td>
+                        <td class="name-cell"><strong>{{ equip.equipment_name }}</strong></td>
+                        <td><span class="dept-badge">{{ equip.category }}</span></td>
+                        <td class="center"><strong>{{ equip.total_quantity }}</strong></td>
+                        <td class="center">
+                            <span class="qty-badge qty-available">{{ equip.available_quantity }}</span>
+                        </td>
+                        <td class="center">
+                            <span class="qty-badge qty-damaged">{{ equip.damaged_quantity }}</span>
+                        </td>
+                        <td class="center">
+                            <span style="font-weight:600;color:#f1f5f9;">{{ equip.lab_name or 'N/A' }}</span><br>
+                            <small class="id-cell" style="font-size:0.72rem;">(ID: {{ equip.lab_id }})</small>
+                        </td>
+                        <td class="center">
+                            {% if equip.is_deleted %}
+                                <span class="status-badge-pill badge-deleted">🗑️ Deleted</span>
+                            {% elif equip.available_quantity == 0 %}
+                                <span class="status-badge-pill badge-issued">📤 Issued</span>
+                            {% elif equip.available_quantity <= 2 %}
+                                <span class="status-badge-pill badge-low">⚠️ Low Stock</span>
+                            {% elif equip.damaged_quantity > 0 %}
+                                <span class="status-badge-pill badge-damaged">🔧 Damaged</span>
+                            {% else %}
+                                <span class="status-badge-pill badge-ok">✅ Good</span>
+                            {% endif %}
+                        </td>
+                        <td class="actions-cell">
+                            <a href="/edit_equipment/{{ equip.equipment_id }}" class="action-link edit-link">✏️ Edit</a>
+                            {% if equip.is_deleted %}
+                                <a href="{{ url_for('undo_delete_equipment', id=equip.equipment_id) }}" class="action-link undo-link">↩️ Restore</a>
+                            {% else %}
+                                <form action="{{ url_for('delete_equipment', id=equip.equipment_id) }}" method="post"
+                                      onsubmit="return confirm('Delete {{ equip.equipment_name }}?')" style="display:inline">
+                                    <button type="submit" class="action-link delete-link">🗑️ Delete</button>
+                                </form>
+                                <a href="{{ url_for('mark_damaged', id=equip.equipment_id) }}" class="action-link damaged-link"
+                                   onclick="return confirm('Mark as damaged?')">⚠️ Damage</a>
+                                <a href="{{ url_for('undo_damage', id=equip.equipment_id) }}" class="action-link undo-link"
+                                   onclick="return confirm('Undo damage?')">↩️ Undo</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if not equipment %}
+            <div class="empty-state"><p>🔧 No equipment found. Add some to get started!</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <style>
+        .qty-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        .qty-available { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+        .qty-damaged { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+
+        .status-badge-pill {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .badge-ok       { background: rgba(34,197,94,0.12);  color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+        .badge-issued   { background: rgba(251,191,36,0.12); color: #fde68a; border: 1px solid rgba(251,191,36,0.3); }
+        .badge-low      { background: rgba(251,146,60,0.12); color: #fdba74; border: 1px solid rgba(251,146,60,0.3); }
+        .badge-damaged  { background: rgba(239,68,68,0.12);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-deleted  { background: rgba(100,116,139,0.12);color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
+    </style>
+    <script>window.scrollTo(0,0);</script>
+</body>
+</html>

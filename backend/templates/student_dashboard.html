@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard - LabTrack</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div>
+            <h2 class="project-title">🔬 LabTrack</h2>
+            <p class="project-desc">Student Portal</p>
+        </div>
+        <div class="nav-links">
+            <span class="logged-in">🎓 {{ session.get('student_name', 'Student') }}</span>
+            <a href="/student/dashboard" class="action-link undo-link" style="padding:8px 18px;">📊 My Dashboard</a>
+            <a href="/student/complaint" class="action-link edit-link" style="padding:8px 18px;">🎫 Raise Complaint</a>
+            <a href="/student/logout" class="logout-btn">🚪 Logout</a>
+        </div>
+    </div>
+
+    <div class="dashboard-wrapper">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Welcome Header -->
+        <div class="dashboard-header">
+            <h1>👋 Welcome, {{ session.get('student_name', 'Student') }}</h1>
+            <p>Track your issued equipment and complaints below</p>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="page-stats-bar">
+            <div class="page-stat">
+                <span class="page-stat-icon">📤</span>
+                <div>
+                    <div class="page-stat-value">{{ my_issues | selectattr('status', 'equalto', 'Issued') | list | length }}</div>
+                    <div class="page-stat-label">Currently Issued</div>
+                </div>
+            </div>
+            <div class="page-stat">
+                <span class="page-stat-icon">✅</span>
+                <div>
+                    <div class="page-stat-value">{{ my_issues | selectattr('status', 'equalto', 'Returned') | list | length }}</div>
+                    <div class="page-stat-label">Returned</div>
+                </div>
+            </div>
+            <div class="page-stat">
+                <span class="page-stat-icon">🎫</span>
+                <div>
+                    <div class="page-stat-value">{{ my_complaints | length }}</div>
+                    <div class="page-stat-label">My Complaints</div>
+                </div>
+            </div>
+            <div class="page-stat">
+                <span class="page-stat-icon">💰</span>
+                <div>
+                    <div class="page-stat-value">₹ {{ my_issues | sum(attribute='fine') }}</div>
+                    <div class="page-stat-label">Total Fine</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Issued Equipment -->
+        <div class="card">
+            <h2 class="card-title">📋 My Issued Equipment</h2>
+            {% if my_issues %}
+            <table class="students-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Equipment</th>
+                        <th>Issue Date</th>
+                        <th>Return Date</th>
+                        <th>Status</th>
+                        <th>Late Days</th>
+                        <th>Fine</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in my_issues %}
+                    <tr class="{% if issue.status == 'Issued' %}issued-row{% endif %}">
+                        <td class="serial-no">{{ loop.index }}</td>
+                        <td class="name-cell"><strong>{{ issue.equipment_name }}</strong></td>
+                        <td class="center"><span class="date-badge">{{ issue.issue_date }}</span></td>
+                        <td class="center">
+                            {% if issue.return_date %}
+                                <span class="date-badge date-returned">{{ issue.return_date }}</span>
+                            {% else %}
+                                <span class="not-returned">— Pending —</span>
+                            {% endif %}
+                        </td>
+                        <td class="center">
+                            {% if issue.status == 'Issued' %}
+                                <span class="status-badge-pill badge-issued">📤 Issued</span>
+                            {% else %}
+                                <span class="status-badge-pill badge-ok">✅ Returned</span>
+                            {% endif %}
+                        </td>
+                        <td class="center">
+                            {% if issue.late_days > 0 %}
+                                <span class="late-badge">🕐 {{ issue.late_days }}d</span>
+                            {% else %}
+                                <span class="on-time">✓ On Time</span>
+                            {% endif %}
+                        </td>
+                        <td class="center">
+                            {% if issue.fine > 0 %}
+                                <span class="fine-badge">₹ {{ issue.fine }}</span>
+                            {% else %}
+                                <span class="no-fine">₹ 0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state"><p>📦 No equipment issued to you yet.</p></div>
+            {% endif %}
+        </div>
+
+        <!-- My Complaints -->
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h2 class="card-title" style="margin:0;">🎫 My Complaints</h2>
+                <a href="/student/complaint" class="action-link edit-link" style="padding:8px 16px;text-decoration:none;">➕ New Complaint</a>
+            </div>
+            {% if my_complaints %}
+            <table class="students-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Type</th>
+                        <th>Equipment</th>
+                        <th>Message</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in my_complaints %}
+                    <tr class="{% if c.status == 'Pending' %}pending-row{% endif %}">
+                        <td class="serial-no">{{ loop.index }}</td>
+                        <td>
+                            {% if c.complaint_type == 'Damaged Equipment' %}
+                                <span class="complaint-type-badge type-damaged">⚠️ Damaged</span>
+                            {% elif c.complaint_type == 'Not Working' %}
+                                <span class="complaint-type-badge type-notworking">🔧 Not Working</span>
+                            {% elif c.complaint_type == 'Missing Item' %}
+                                <span class="complaint-type-badge type-missing">❓ Missing</span>
+                            {% else %}
+                                <span class="complaint-type-badge type-other">📝 Other</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ c.equipment_name or '—' }}</td>
+                        <td style="max-width:200px;">
+                            <span class="complaint-message">{{ c.message }}</span>
+                        </td>
+                        <td class="center">
+                            {% if c.status == 'Pending' %}
+                                <span class="status-badge-pill badge-issued">⏳ Pending</span>
+                            {% else %}
+                                <span class="status-badge-pill badge-ok">✅ Resolved</span>
+                            {% endif %}
+                        </td>
+                        <td class="center">
+                            <span class="date-badge">{{ c.submitted_at.strftime('%d %b %Y') if c.submitted_at else '—' }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state"><p>🎉 No complaints submitted yet.</p></div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <style>
+        .date-badge { background:rgba(100,116,139,0.15);color:#cbd5e1;padding:3px 10px;border-radius:6px;font-size:0.82rem;font-weight:500;display:inline-block; }
+        .date-returned { background:rgba(34,197,94,0.1);color:#86efac; }
+        .status-badge-pill { padding:5px 12px;border-radius:20px;font-size:0.78rem;font-weight:700;display:inline-block;white-space:nowrap; }
+        .badge-ok     { background:rgba(34,197,94,0.12);color:#86efac;border:1px solid rgba(34,197,94,0.3); }
+        .badge-issued { background:rgba(251,191,36,0.12);color:#fde68a;border:1px solid rgba(251,191,36,0.3); }
+        .pending-row  { background:rgba(251,191,36,0.05) !important;border-left:3px solid rgba(251,191,36,0.4) !important; }
+        .complaint-type-badge { padding:4px 10px;border-radius:20px;font-size:0.78rem;font-weight:700;display:inline-block;white-space:nowrap; }
+        .type-damaged    { background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.3); }
+        .type-notworking { background:rgba(251,146,60,0.12);color:#fdba74;border:1px solid rgba(251,146,60,0.3); }
+        .type-missing    { background:rgba(168,85,247,0.12);color:#d8b4fe;border:1px solid rgba(168,85,247,0.3); }
+        .type-other      { background:rgba(100,116,139,0.12);color:#94a3b8;border:1px solid rgba(100,116,139,0.3); }
+        .complaint-message { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-clamp:2;overflow:hidden;color:#cbd5e1;font-size:0.88rem;line-height:1.5; }
+    </style>
+</body>
+</html>
