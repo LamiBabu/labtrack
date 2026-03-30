@@ -60,10 +60,10 @@ def home():
     conn = get_conn()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT COUNT(*) FROM students WHERE is_deleted = FALSE")
+    cursor.execute("SELECT COUNT(*) FROM students")
     total_students = cursor.fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM equipment WHERE is_deleted = FALSE")
+    cursor.execute("SELECT COUNT(*) FROM equipment")
     total_equipment = cursor.fetchone()[0]
 
     cursor.execute("SELECT COUNT(*) FROM issue_records WHERE status='Issued'")
@@ -76,10 +76,10 @@ def home():
     result = cursor.fetchone()[0]
     total_fine = result if result else 0
 
-    cursor.execute("SELECT COUNT(*) FROM equipment WHERE available_quantity = 0 AND is_deleted = FALSE")
+    cursor.execute("SELECT COUNT(*) FROM equipment WHERE available_quantity = 0")
     out_of_stock = cursor.fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM equipment WHERE available_quantity > 0 AND available_quantity <= 2 AND is_deleted = FALSE")
+    cursor.execute("SELECT COUNT(*) FROM equipment WHERE available_quantity > 0 AND available_quantity <= 2")
     low_stock = cursor.fetchone()[0]
 
     conn2 = get_conn()
@@ -87,7 +87,7 @@ def home():
     cursor2.execute("""
         SELECT category, SUM(total_quantity) as total, SUM(available_quantity) as available,
                SUM(damaged_quantity) as damaged
-        FROM equipment WHERE is_deleted = FALSE GROUP BY category
+        FROM equipment GROUP BY category
     """)
     chart_data = [{'category': r['category'], 'total': int(r['total'] or 0), 'available': int(r['available'] or 0), 'damaged': int(r['damaged'] or 0)} for r in cursor2.fetchall()]
 
@@ -189,21 +189,9 @@ def edit_student(id):
 def delete_student(id):
     conn = get_conn()
     cursor = conn.cursor()
-    cursor.execute("UPDATE students SET is_deleted = TRUE WHERE student_id=%s", (id,))
+    cursor.execute("DELETE FROM students WHERE student_id=%s", (id,))
     conn.commit()
     flash('Student deleted.', 'warning')
-    conn.close()
-    return redirect(url_for('students'))
-
-
-@app.route('/undo_student/<int:id>')
-@login_required
-def undo_student(id):
-    conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE students SET is_deleted = FALSE WHERE student_id = %s", (id,))
-    conn.commit()
-    flash('Student restored!', 'success')
     conn.close()
     return redirect(url_for('students'))
 
@@ -298,21 +286,9 @@ def edit_equipment(id):
 def delete_equipment(id):
     conn = get_conn()
     cursor = conn.cursor()
-    cursor.execute("UPDATE equipment SET is_deleted = TRUE WHERE equipment_id=%s", (id,))
+    cursor.execute("DELETE FROM equipment WHERE equipment_id=%s", (id,))
     conn.commit()
     flash('Equipment deleted.', 'warning')
-    conn.close()
-    return redirect(url_for('equipment'))
-
-
-@app.route('/undo_delete_equipment/<int:id>')
-@login_required
-def undo_delete_equipment(id):
-    conn = get_conn()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE equipment SET is_deleted = FALSE WHERE equipment_id=%s", (id,))
-    conn.commit()
-    flash('Equipment restored!', 'success')
     conn.close()
     return redirect(url_for('equipment'))
 
@@ -374,7 +350,7 @@ def labs():
                COALESCE(SUM(e.available_quantity), 0) AS total_available,
                COALESCE(SUM(e.damaged_quantity), 0) AS total_damaged
         FROM labs l
-        LEFT JOIN equipment e ON e.lab_id = l.lab_id AND e.is_deleted = FALSE
+        LEFT JOIN equipment e ON e.lab_id = l.lab_id
         GROUP BY l.lab_id ORDER BY l.lab_name
     """)
     lab_list = cursor.fetchall()
@@ -407,9 +383,9 @@ def issues():
             total_days = 0
         issue['late_days'] = max(0, total_days - 5)
 
-    cursor.execute("SELECT student_id, name FROM students WHERE is_deleted = FALSE")
+    cursor.execute("SELECT student_id, name FROM students")
     students_list = cursor.fetchall()
-    cursor.execute("SELECT equipment_id, equipment_name FROM equipment WHERE available_quantity > 0 AND is_deleted = FALSE")
+    cursor.execute("SELECT equipment_id, equipment_name FROM equipment WHERE available_quantity > 0")
     equipment_list = cursor.fetchall()
     conn.close()
     return render_template('issues.html', issue_list=issue_list, students=students_list, equipment_list=equipment_list)
@@ -559,7 +535,7 @@ def raise_complaint():
         flash('Complaint submitted successfully!', 'success')
         return redirect(url_for('student_dashboard'))
 
-    cursor.execute("SELECT equipment_id, equipment_name FROM equipment WHERE is_deleted = FALSE")
+    cursor.execute("SELECT equipment_id, equipment_name FROM equipment")
     equipment_list = cursor.fetchall()
     conn.close()
     return render_template('raise_complaint.html', equipment_list=equipment_list)
