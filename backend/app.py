@@ -347,7 +347,6 @@ def labs():
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
         SELECT l.*, COUNT(DISTINCT e.equipment_id) AS total_equipment,
-               COALESCE(SUM(e.available_quantity), 0) AS total_available,
                COALESCE(SUM(e.damaged_quantity), 0) AS total_damaged
         FROM labs l
         LEFT JOIN equipment e ON e.lab_id = l.lab_id

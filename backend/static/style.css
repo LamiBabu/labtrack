@@ -1570,3 +1570,9 @@ html {
 @media (max-width: 768px) {
     .btn-group { flex-wrap: wrap; }
 }
+
+.quick-link-btn.complaints-btn:hover {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+    color: #fbbf24;
+}

@@ -29,8 +29,8 @@
             </div>
             <div class="lab-summary-item">
                 <span class="lab-summary-icon">✅</span>
-                <span class="lab-summary-value">{{ lab_list | sum(attribute='total_available') }}</span>
-                <span class="lab-summary-label">Available</span>
+                <span class="lab-summary-value">{{ lab_list | sum(attribute='total_equipment') - lab_list | sum(attribute='total_damaged') }}</span>
+                <span class="lab-summary-label">Total Available</span>
             </div>
             <div class="lab-summary-item">
                 <span class="lab-summary-icon">⚠️</span>
@@ -65,10 +65,6 @@
                 <div class="lab-card-footer">
                     {% if lab.total_equipment == 0 %}
                         <span class="lab-status-badge lab-empty">📭 No Equipment</span>
-                    {% elif lab.total_damaged > 0 and lab.total_available == 0 %}
-                        <span class="lab-status-badge lab-full">📤 All Issued / Damaged</span>
-                    {% elif lab.total_available == 0 %}
-                        <span class="lab-status-badge lab-full">📤 All Issued</span>
                     {% elif lab.total_damaged > 0 %}
                         <span class="lab-status-badge lab-damaged">⚠️ Has Damaged</span>
                     {% else %}
