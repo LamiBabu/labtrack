@@ -146,6 +146,7 @@
                         <th>Message</th>
                         <th>Status</th>
                         <th>Date</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -176,6 +177,16 @@
                         </td>
                         <td class="center">
                             <span class="date-badge">{{ c.submitted_at.strftime('%d %b %Y') if c.submitted_at else '—' }}</span>
+                        </td>
+                        <td>
+                            {% if c.status == 'Pending' %}
+                            <form action="/student/complaint/delete/{{ c.complaint_id }}" method="post"
+                                  onsubmit="return confirm('Delete this complaint?')" style="display:contents">
+                                <button type="submit" class="btn-action btn-delete">🗑️ Delete</button>
+                            </form>
+                            {% else %}
+                                <span style="color:#64748b;font-size:0.8rem;">—</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

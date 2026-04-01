@@ -112,12 +112,14 @@
                         <td><span class="dept-badge">{{ student.department }}</span></td>
                         <td class="center"><span class="year-badge">Year {{ student.year }}</span></td>
                         <td>📞 {{ student.phone }}</td>
-                        <td class="actions-cell">
-                            <a href="/edit_student/{{ student.student_id }}" class="action-link edit-link">✏️ Edit</a>
-                            <form action="{{ url_for('delete_student', id=student.student_id) }}" method="post"
-                                  onsubmit="return confirm('Delete {{ student.name }}?')" style="display:inline">
-                                <button type="submit" class="action-link delete-link">🗑️ Delete</button>
-                            </form>
+                        <td>
+                            <div class="btn-group">
+                                <a href="/edit_student/{{ student.student_id }}" class="btn-action btn-edit">✏️ Edit</a>
+                                <form action="{{ url_for('delete_student', id=student.student_id) }}" method="post"
+                                      onsubmit="return confirm('Delete {{ student.name }}?')" style="display:contents">
+                                    <button type="submit" class="btn-action btn-delete">🗑️ Delete</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

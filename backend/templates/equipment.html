@@ -132,16 +132,18 @@
                                 <span class="status-badge-pill badge-ok">✅ Good</span>
                             {% endif %}
                         </td>
-                        <td class="actions-cell">
-                            <a href="/edit_equipment/{{ equip.equipment_id }}" class="action-link edit-link">✏️ Edit</a>
-                            <form action="{{ url_for('delete_equipment', id=equip.equipment_id) }}" method="post"
-                                  onsubmit="return confirm('Delete {{ equip.equipment_name }}?')" style="display:inline">
-                                <button type="submit" class="action-link delete-link">🗑️ Delete</button>
-                            </form>
-                            <a href="{{ url_for('mark_damaged', id=equip.equipment_id) }}" class="action-link damaged-link"
-                               onclick="return confirm('Mark as damaged?')">⚠️ Damage</a>
-                            <a href="{{ url_for('undo_damage', id=equip.equipment_id) }}" class="action-link undo-link"
-                               onclick="return confirm('Undo damage?')">↩️ Undo</a>
+                        <td>
+                            <div class="btn-group" style="flex-wrap:wrap;gap:5px;">
+                                <a href="/edit_equipment/{{ equip.equipment_id }}" class="btn-action btn-edit">✏️ Edit</a>
+                                <form action="{{ url_for('delete_equipment', id=equip.equipment_id) }}" method="post"
+                                      onsubmit="return confirm('Delete {{ equip.equipment_name }}?')" style="display:contents">
+                                    <button type="submit" class="btn-action btn-delete">🗑️ Delete</button>
+                                </form>
+                                <a href="{{ url_for('mark_damaged', id=equip.equipment_id) }}" class="btn-action btn-damage"
+                                   onclick="return confirm('Mark as damaged?')">⚠️ Damage</a>
+                                <a href="{{ url_for('undo_damage', id=equip.equipment_id) }}" class="btn-action btn-undo"
+                                   onclick="return confirm('Undo damage?')">↩️ Undo</a>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

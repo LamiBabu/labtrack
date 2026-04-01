@@ -581,5 +581,18 @@ def pending_complaint(id):
     return redirect(url_for('complaints'))
 
 
+@app.route('/student/complaint/delete/<int:id>', methods=['POST'])
+@student_login_required
+def delete_complaint(id):
+    student_id = session['student_user_id']
+    conn = get_conn()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM complaints WHERE complaint_id=%s AND student_id=%s", (id, student_id))
+    conn.commit()
+    conn.close()
+    flash('Complaint deleted.', 'warning')
+    return redirect(url_for('student_dashboard'))
+
+
 if __name__ == "__main__":
     app.run(debug=True)
